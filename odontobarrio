@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# CLI para ejecutar la Landing Page OdontoBarrio (proyecto Vite + React).
+#
+# Uso:
+#   ./odontobarrio dev       Instala dependencias (si falta) y levanta el servidor de desarrollo
+#   ./odontobarrio build     Instala dependencias (si falta) y genera el build de producción
+#   ./odontobarrio preview   Sirve el build de producción ya generado (requiere haber corrido build antes)
+#   ./odontobarrio install   Fuerza la instalación/actualización de dependencias
+#
+# Si no se pasa ningún comando, se ejecuta "dev" por defecto.
+
+set -euo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR"
+
+# El package.json de este proyecto (exportado desde Figma Make) usa el
+# formato de alias de dependencias de pnpm (p.ej. "@emotion/react@11.14.0":
+# "npm:@emotion/react@11.14.0"), que npm no soporta (EINVALIDPACKAGENAME).
+# Por eso usamos pnpm en vez de npm.
+if command -v pnpm >/dev/null 2>&1; then
+  PM="pnpm"
+else
+  PM="npx --yes pnpm@9"
+fi
+
+ensure_deps() {
+  if [ ! -d "node_modules" ]; then
+    echo "==> Instalando dependencias (pnpm)..."
+    $PM install
+  fi
+}
+
+cmd="${1:-dev}"
+
+case "$cmd" in
+  dev)
+    ensure_deps
+    echo "==> Levantando servidor de desarrollo..."
+    $PM run dev
+    ;;
+  build)
+    ensure_deps
+    echo "==> Generando build de producción..."
+    $PM run build
+    ;;
+  preview)
+    if [ ! -d "dist" ]; then
+      echo "No existe la carpeta 'dist'. Corré primero: ./odontobarrio build" >&2
+      exit 1
+    fi
+    echo "==> Sirviendo build de producción..."
+    $PM exec vite preview
+    ;;
+  install)
+    echo "==> Instalando dependencias (pnpm)..."
+    $PM install
+    ;;
+  *)
+    echo "Comando desconocido: $cmd" >&2
+    echo "Uso: ./odontobarrio [dev|build|preview|install]" >&2
+    exit 1
+    ;;
+esac

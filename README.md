@@ -8,4 +8,8 @@
   Run `npm i` to install the dependencies.
 
   Run `npm run dev` to start the development server.
+
+  ## Deployment
+
+  This project is deployed to GitHub Pages automatically via GitHub Actions on every push to `main`. The live site is available at https://bmmedinac.github.io/landing-page-odontobarrio/.
   

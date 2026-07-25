@@ -6,6 +6,7 @@ import { Pricing } from './components/Pricing';
 import { HowToBook } from './components/HowToBook';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
+import { ChatWidget } from './components/ChatWidget';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <HowToBook />
       <Contact />
       <Footer />
+      <ChatWidget />
     </div>
   );
 }

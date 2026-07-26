@@ -1,8 +1,10 @@
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, Lock } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 // Reemplaza esta URL por la que te entrega `wrangler deploy` en cloudflare-worker/.
 const WORKER_URL = 'https://odontobarrio-chat-proxy.YOUR_SUBDOMAIN.workers.dev';
+
+const ACCESS_CODE_STORAGE_KEY = 'odontobarrio-chat-access-code';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -16,6 +18,11 @@ const WELCOME_MESSAGE: ChatMessage = {
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [accessCode, setAccessCode] = useState<string | null>(() =>
+    typeof window !== 'undefined' ? window.localStorage.getItem(ACCESS_CODE_STORAGE_KEY) : null
+  );
+  const [codeInput, setCodeInput] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,9 +33,18 @@ export function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
+  const submitCode = () => {
+    const code = codeInput.trim();
+    if (!code) return;
+    window.localStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
+    setAccessCode(code);
+    setCodeInput('');
+    setCodeError(null);
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || !accessCode) return;
 
     const nextMessages = [...messages, { role: 'user', content: text } as ChatMessage];
     setMessages(nextMessages);
@@ -39,9 +55,17 @@ export function ChatWidget() {
     try {
       const response = await fetch(WORKER_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
         body: JSON.stringify({ messages: nextMessages }),
       });
+
+      if (response.status === 401) {
+        window.localStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+        setAccessCode(null);
+        setCodeError('Código incorrecto. Intenta de nuevo.');
+        setMessages(messages);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('request_failed');
@@ -61,9 +85,15 @@ export function ChatWidget() {
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleMessageKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       sendMessage();
+    }
+  };
+
+  const handleCodeKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      submitCode();
     }
   };
 
@@ -78,53 +108,82 @@ export function ChatWidget() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            {messages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                    message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
-                  }`}
+          {!accessCode ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
+              <div className="bg-blue-50 rounded-full p-3">
+                <Lock className="w-6 h-6 text-blue-600" />
+              </div>
+              <p className="text-gray-700">Este chat es solo para alumnos. Ingresa el código de acceso que te compartieron.</p>
+              <div className="w-full flex items-center gap-2">
+                <input
+                  type="password"
+                  value={codeInput}
+                  onChange={(event) => setCodeInput(event.target.value)}
+                  onKeyDown={handleCodeKeyDown}
+                  placeholder="Código de acceso"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={submitCode}
+                  disabled={!codeInput.trim()}
+                  className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  {message.content}
-                </div>
+                  Entrar
+                </button>
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg px-3 py-2 bg-gray-100 text-gray-500">Escribiendo...</div>
-              </div>
-            )}
-            {error && (
-              <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-lg px-3 py-2 bg-red-50 text-red-700 border border-red-100">{error}</div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="border-t border-gray-100 p-3">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Escribe tu pregunta..."
-                disabled={isLoading}
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={isLoading || !input.trim()}
-                className="bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 transition disabled:opacity-50"
-                aria-label="Enviar"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+              {codeError && <p className="text-sm text-red-600">{codeError}</p>}
             </div>
-            <p className="text-xs text-gray-400 mt-2">Este asistente no reemplaza una consulta profesional.</p>
-          </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                        message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] rounded-lg px-3 py-2 bg-gray-100 text-gray-500">Escribiendo...</div>
+                  </div>
+                )}
+                {error && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] rounded-lg px-3 py-2 bg-red-50 text-red-700 border border-red-100">{error}</div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <div className="border-t border-gray-100 p-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={handleMessageKeyDown}
+                    placeholder="Escribe tu pregunta..."
+                    disabled={isLoading}
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={isLoading || !input.trim()}
+                    className="bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 transition disabled:opacity-50"
+                    aria-label="Enviar"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Este asistente no reemplaza una consulta profesional.</p>
+              </div>
+            </>
+          )}
         </div>
       )}
 

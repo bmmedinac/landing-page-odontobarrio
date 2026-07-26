@@ -1,5 +1,6 @@
 export interface Env {
   ANTHROPIC_API_KEY: string;
+  ACCESS_CODE: string;
 }
 
 const ALLOWED_ORIGIN = 'https://bmmedinac.github.io';
@@ -50,7 +51,7 @@ function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Access-Code',
   };
 }
 
@@ -69,6 +70,11 @@ export default {
 
     if (request.method !== 'POST') {
       return jsonResponse({ error: 'Method not allowed' }, 405);
+    }
+
+    const accessCode = request.headers.get('X-Access-Code') ?? '';
+    if (!env.ACCESS_CODE || accessCode !== env.ACCESS_CODE) {
+      return jsonResponse({ error: 'unauthorized' }, 401);
     }
 
     let body: { messages?: Array<{ role: string; content: string }> };

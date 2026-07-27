@@ -1,5 +1,26 @@
 import { MessageCircle, X, Send, Lock, Maximize2, Minimize2, ChevronRight } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+
+const markdownComponents = {
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => (
+    <ul className="list-disc pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ul>
+  ),
+  ol: ({ children }: { children?: React.ReactNode }) => (
+    <ol className="list-decimal pl-4 mb-2 last:mb-0 space-y-0.5">{children}</ol>
+  ),
+  li: ({ children }: { children?: React.ReactNode }) => <li>{children}</li>,
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="underline">
+      {children}
+    </a>
+  ),
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold">{children}</strong>,
+  code: ({ children }: { children?: React.ReactNode }) => (
+    <code className="bg-black/10 rounded px-1 py-0.5 text-[0.85em]">{children}</code>
+  ),
+};
 
 const DEFAULT_WEBHOOK_URL = 'https://hook.us1.make.com/36anav6tlgq85s1fxmvwdrn6abn6jlh2';
 const ACCESS_CODE_STORAGE_KEY = 'odontobarrio-chat-access-code';
@@ -336,7 +357,7 @@ export function ChatWidget() {
                           message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {message.content}
+                        <ReactMarkdown components={markdownComponents}>{message.content}</ReactMarkdown>
                       </div>
                       {hasToolInfo && (
                         <div className="max-w-[80%] mt-1 text-xs text-gray-500 font-mono">

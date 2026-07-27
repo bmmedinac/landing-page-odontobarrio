@@ -1,9 +1,7 @@
 import { MessageCircle, X, Send, Lock } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-// Reemplaza esta URL por la que te entrega `wrangler deploy` en cloudflare-worker/.
-const WORKER_URL = 'https://odontobarrio-chat-proxy.YOUR_SUBDOMAIN.workers.dev';
-
+const WEBHOOK_URL = 'https://hook.us1.make.com/36anav6tlgq85s1fxmvwdrn6abn6jlh2';
 const ACCESS_CODE_STORAGE_KEY = 'odontobarrio-chat-access-code';
 
 type ChatMessage = {
@@ -16,8 +14,13 @@ const WELCOME_MESSAGE: ChatMessage = {
   content: 'Hola 👋 Soy el asistente virtual de OdontoBarrio. ¿En qué puedo ayudarte?',
 };
 
+function generateThreadId() {
+  return 'thread_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+}
+
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState<string | null>(() =>
     typeof window !== 'undefined' ? window.localStorage.getItem(ACCESS_CODE_STORAGE_KEY) : null
   );
@@ -33,6 +36,12 @@ export function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    if (isOpen && !threadId) {
+      setThreadId(generateThreadId());
+    }
+  }, [isOpen, threadId]);
+
   const submitCode = () => {
     const code = codeInput.trim();
     if (!code) return;
@@ -44,7 +53,7 @@ export function ChatWidget() {
 
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || isLoading || !accessCode) return;
+    if (!text || isLoading || !accessCode || !threadId) return;
 
     const nextMessages = [...messages, { role: 'user', content: text } as ChatMessage];
     setMessages(nextMessages);
@@ -53,10 +62,10 @@ export function ChatWidget() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(WORKER_URL, {
+      const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ message: text, threadID: threadId }),
       });
 
       if (response.status === 401) {
@@ -72,7 +81,7 @@ export function ChatWidget() {
       }
 
       const data = await response.json();
-      const reply = data?.content?.[0]?.text;
+      const reply = data?.message;
       if (!reply) {
         throw new Error('empty_reply');
       }

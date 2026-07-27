@@ -1,8 +1,25 @@
-import { MessageCircle, X, Send, Lock } from 'lucide-react';
+import { MessageCircle, X, Send, Lock, Maximize2, Minimize2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-const WEBHOOK_URL = 'https://hook.us1.make.com/36anav6tlgq85s1fxmvwdrn6abn6jlh2';
+const DEFAULT_WEBHOOK_URL = 'https://hook.us1.make.com/36anav6tlgq85s1fxmvwdrn6abn6jlh2';
 const ACCESS_CODE_STORAGE_KEY = 'odontobarrio-chat-access-code';
+
+function loadGroupWebhooks(): Record<string, string> {
+  const raw = import.meta.env.VITE_GROUP_WEBHOOKS as string | undefined;
+  if (!raw) return { General: DEFAULT_WEBHOOK_URL };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+      return parsed;
+    }
+  } catch {
+    // ignore malformed secret, fall back below
+  }
+  return { General: DEFAULT_WEBHOOK_URL };
+}
+
+const GROUP_WEBHOOKS = loadGroupWebhooks();
+const GROUP_NAMES = Object.keys(GROUP_WEBHOOKS);
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -20,6 +37,8 @@ function generateThreadId() {
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(GROUP_NAMES[0]);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [accessCode, setAccessCode] = useState<string | null>(() =>
     typeof window !== 'undefined' ? window.localStorage.getItem(ACCESS_CODE_STORAGE_KEY) : null
@@ -62,7 +81,8 @@ export function ChatWidget() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
+      const webhookUrl = GROUP_WEBHOOKS[selectedGroup] ?? DEFAULT_WEBHOOK_URL;
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
         body: JSON.stringify({ message: text, threadID: threadId, pairId: '', caseCode: '' }),
@@ -109,12 +129,27 @@ export function ChatWidget() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <div className="mb-4 w-80 sm:w-96 h-[28rem] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+        <div
+          className={
+            isExpanded
+              ? 'mb-4 fixed inset-y-0 right-0 w-full sm:w-[28rem] h-full bg-white shadow-2xl border-l border-gray-200 flex flex-col overflow-hidden'
+              : 'mb-4 w-80 sm:w-96 h-[28rem] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden'
+          }
+        >
           <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
             <span className="text-white">Asistente OdontoBarrio</span>
-            <button onClick={() => setIsOpen(false)} className="text-white hover:text-blue-100" aria-label="Cerrar chat">
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-white hover:text-blue-100 p-1"
+                aria-label={isExpanded ? 'Contraer chat' : 'Expandir chat'}
+              >
+                {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+              </button>
+              <button onClick={() => setIsOpen(false)} className="text-white hover:text-blue-100 p-1" aria-label="Cerrar chat">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {!accessCode ? (
@@ -144,6 +179,25 @@ export function ChatWidget() {
             </div>
           ) : (
             <>
+              {GROUP_NAMES.length > 1 && (
+                <div className="border-b border-gray-100 px-4 py-2">
+                  <label className="block text-xs text-gray-500 mb-1" htmlFor="chat-group-select">
+                    Grupo
+                  </label>
+                  <select
+                    id="chat-group-select"
+                    value={selectedGroup}
+                    onChange={(event) => setSelectedGroup(event.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {GROUP_NAMES.map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                 {messages.map((message, index) => (
                   <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -196,13 +250,15 @@ export function ChatWidget() {
         </div>
       )}
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
-        aria-label={isOpen ? 'Cerrar chat' : 'Abrir chat'}
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
+      {!(isOpen && isExpanded) && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-blue-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-blue-700 transition"
+          aria-label={isOpen ? 'Cerrar chat' : 'Abrir chat'}
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        </button>
+      )}
     </div>
   );
 }

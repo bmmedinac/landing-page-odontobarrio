@@ -65,7 +65,7 @@ export function ChatWidget() {
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
-        body: JSON.stringify({ message: text, threadID: threadId }),
+        body: JSON.stringify({ message: text, threadID: threadId, pairId: '', caseCode: '' }),
       });
 
       if (response.status === 401) {

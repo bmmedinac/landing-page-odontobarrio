@@ -81,7 +81,7 @@ export function ChatWidget() {
       }
 
       const data = await response.json();
-      const reply = data?.message;
+      const reply = data?.response;
       if (!reply) {
         throw new Error('empty_reply');
       }

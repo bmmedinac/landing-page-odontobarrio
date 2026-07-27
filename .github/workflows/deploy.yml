@@ -37,6 +37,8 @@ jobs:
 
       - name: Build
         run: pnpm run build
+        env:
+          VITE_GROUP_WEBHOOKS: ${{ secrets.GROUP_WEBHOOKS }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

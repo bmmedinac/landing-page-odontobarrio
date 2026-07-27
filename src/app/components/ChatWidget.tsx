@@ -69,10 +69,21 @@ function formatToolResult(raw: unknown): { text: string; parseError: boolean } {
 
 function extractToolExecutions(data: unknown): { executions: ToolExecution[]; mappingError: string | null } {
   try {
-    const steps = (data as { metadata?: { executionSteps?: unknown[] } })?.metadata?.executionSteps;
-    if (!Array.isArray(steps)) {
+    const allSteps = (data as { metadata?: { executionSteps?: unknown[] } })?.metadata?.executionSteps;
+    if (!Array.isArray(allSteps)) {
       return { executions: [], mappingError: null };
     }
+
+    // executionSteps acumula todo el historial del thread; nos quedamos solo con
+    // lo que ocurrió después del último turno del usuario (el mensaje actual).
+    let currentTurnStart = 0;
+    for (let i = allSteps.length - 1; i >= 0; i--) {
+      if ((allSteps[i] as Record<string, unknown> | undefined)?.role === 'user') {
+        currentTurnStart = i + 1;
+        break;
+      }
+    }
+    const steps = allSteps.slice(currentTurnStart);
 
     const callsById = new Map<string, { name: string; toolType: string }>();
     for (const step of steps as Array<Record<string, unknown>>) {

@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -39,6 +39,25 @@ jobs:
         run: pnpm run build
         env:
           VITE_GROUP_WEBHOOKS: ${{ secrets.GROUP_WEBHOOKS }}
+
+      - name: Checkout corpus-explorer
+        uses: actions/checkout@v4
+        with:
+          repository: bmmedinac/corpus-explorer
+          path: corpus-explorer
+
+      - name: Install corpus-explorer dependencies
+        run: npm ci
+        working-directory: corpus-explorer
+
+      - name: Build corpus-explorer
+        run: npm run build -- --base=/landing-page-odontobarrio/corpus/
+        working-directory: corpus-explorer
+
+      - name: Merge corpus-explorer into dist
+        run: |
+          mkdir -p dist/corpus
+          cp -r corpus-explorer/dist/. dist/corpus/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

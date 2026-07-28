@@ -1,5 +1,5 @@
 {
-  "name": "odontobarrio-chat-proxy",
+  "name": "odontobarrio-chat-access-gate",
   "private": true,
   "version": "0.0.1",
   "scripts": {

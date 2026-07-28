@@ -38,7 +38,7 @@ export function Navigation() {
             <button onClick={() => scrollToSection('agendar')} className="text-gray-700 hover:text-blue-600 transition">
               Cómo Agendar
             </button>
-            <a href="corpus/" className="text-gray-700 hover:text-blue-600 transition">
+            <a href="corpus/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-blue-600 transition">
               Corpus
             </a>
             <button
@@ -85,7 +85,7 @@ export function Navigation() {
             >
               Cómo Agendar
             </button>
-            <a href="corpus/" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
+            <a href="corpus/" target="_blank" rel="noopener noreferrer" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
               Corpus
             </a>
             <button

@@ -44,10 +44,14 @@ jobs:
       # GITHUB_TOKEN de este workflow no tiene permiso para consultar otros
       # repos vía la API, y actions/checkout lo necesita para resolver la
       # rama por defecto. git clone anónimo no pasa por esa API.
+      # -c credential.helper= evita que el credential helper de gh CLI
+      # (preconfigurado globalmente en los runners de GitHub Actions) intente
+      # autenticar esta petición anónima y la haga fallar con
+      # "could not read Username for 'https://github.com'".
       - name: Checkout corpus-explorer
         id: checkout_corpus
         continue-on-error: true
-        run: git clone --depth 1 https://github.com/bmmedinac/corpus-explorer corpus-explorer
+        run: git -c credential.helper= clone --depth 1 https://github.com/bmmedinac/corpus-explorer corpus-explorer
 
       - name: Install corpus-explorer dependencies
         id: install_corpus

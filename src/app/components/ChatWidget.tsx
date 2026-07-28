@@ -200,6 +200,12 @@ export function ChatWidget() {
     }
   }, [isOpen, threadId]);
 
+  useEffect(() => {
+    const openChat = () => setIsOpen(true);
+    window.addEventListener('open-chat-widget', openChat);
+    return () => window.removeEventListener('open-chat-widget', openChat);
+  }, []);
+
   const submitCode = () => {
     const code = codeInput.trim();
     if (!code) return;
@@ -256,7 +262,7 @@ export function ChatWidget() {
         },
       ]);
     } catch {
-      setError('No pudimos conectar con el asistente. Escríbenos por WhatsApp al +56 9 1234 5678.');
+      setError('No pudimos conectar con el asistente. Intenta nuevamente en unos minutos o llámanos al +56 2 1000 1000.');
     } finally {
       setIsLoading(false);
     }

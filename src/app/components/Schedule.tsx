@@ -39,15 +39,15 @@ export function Schedule() {
             </div>
           </div>
 
-          {/* WhatsApp */}
+          {/* Chat en línea */}
           <div className="bg-green-50 rounded-xl p-8 border border-green-100">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-green-600 rounded-lg p-3">
                 <MessageSquare className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-green-900">Atención WhatsApp</h3>
+              <h3 className="text-green-900">Atención por Chat</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-700">Lunes a Sábado</span>
@@ -62,7 +62,7 @@ export function Schedule() {
 
             <div className="mt-6 p-4 bg-white rounded-lg">
               <p className="text-sm text-gray-600">
-                Respondemos tus consultas por WhatsApp de manera rápida y personalizada
+                Respondemos tus consultas por el chat de esta página de manera rápida y personalizada
               </p>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function Schedule() {
             <div>
               <h4 className="text-red-900 mb-2">Urgencias Dentales</h4>
               <p className="text-gray-700">
-                Las urgencias se atienden según disponibilidad. Contáctanos por WhatsApp para coordinar tu atención lo antes posible.
+                Las urgencias se atienden según disponibilidad. Contáctanos por el chat de esta página para coordinar tu atención lo antes posible.
               </p>
             </div>
           </div>

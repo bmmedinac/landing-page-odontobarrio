@@ -39,7 +39,7 @@ export function Navigation() {
               Cómo Agendar
             </button>
             <a href="corpus/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-blue-600 transition">
-              Corpus
+              Conversaciones
             </a>
             <button
               onClick={() => scrollToSection('contacto')}
@@ -86,7 +86,7 @@ export function Navigation() {
               Cómo Agendar
             </button>
             <a href="corpus/" target="_blank" rel="noopener noreferrer" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
-              Corpus
+              Conversaciones
             </a>
             <button
               onClick={() => scrollToSection('contacto')}

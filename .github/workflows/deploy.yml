@@ -40,21 +40,31 @@ jobs:
         env:
           VITE_GROUP_WEBHOOKS: ${{ secrets.GROUP_WEBHOOKS }}
 
+      # corpus-explorer se clona con git plano (no actions/checkout): el
+      # GITHUB_TOKEN de este workflow no tiene permiso para consultar otros
+      # repos vía la API, y actions/checkout lo necesita para resolver la
+      # rama por defecto. git clone anónimo no pasa por esa API.
       - name: Checkout corpus-explorer
-        uses: actions/checkout@v4
-        with:
-          repository: bmmedinac/corpus-explorer
-          path: corpus-explorer
+        id: checkout_corpus
+        continue-on-error: true
+        run: git clone --depth 1 https://github.com/bmmedinac/corpus-explorer corpus-explorer
 
       - name: Install corpus-explorer dependencies
+        id: install_corpus
+        if: steps.checkout_corpus.outcome == 'success'
+        continue-on-error: true
         run: npm ci
         working-directory: corpus-explorer
 
       - name: Build corpus-explorer
+        id: build_corpus
+        if: steps.install_corpus.outcome == 'success'
+        continue-on-error: true
         run: npm run build -- --base=/landing-page-odontobarrio/corpus/
         working-directory: corpus-explorer
 
       - name: Merge corpus-explorer into dist
+        if: steps.build_corpus.outcome == 'success'
         run: |
           mkdir -p dist/corpus
           cp -r corpus-explorer/dist/. dist/corpus/

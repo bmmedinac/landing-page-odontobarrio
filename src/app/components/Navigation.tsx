@@ -38,8 +38,11 @@ export function Navigation() {
             <button onClick={() => scrollToSection('agendar')} className="text-gray-700 hover:text-blue-600 transition">
               Cómo Agendar
             </button>
-            <button 
-              onClick={() => scrollToSection('contacto')} 
+            <a href="corpus/" className="text-gray-700 hover:text-blue-600 transition">
+              Corpus
+            </a>
+            <button
+              onClick={() => scrollToSection('contacto')}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
             >
               Contacto
@@ -76,14 +79,17 @@ export function Navigation() {
             >
               Precios
             </button>
-            <button 
-              onClick={() => scrollToSection('agendar')} 
+            <button
+              onClick={() => scrollToSection('agendar')}
               className="block w-full text-left text-gray-700 hover:text-blue-600 transition"
             >
               Cómo Agendar
             </button>
-            <button 
-              onClick={() => scrollToSection('contacto')} 
+            <a href="corpus/" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
+              Corpus
+            </a>
+            <button
+              onClick={() => scrollToSection('contacto')}
               className="block w-full text-left bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
             >
               Contacto

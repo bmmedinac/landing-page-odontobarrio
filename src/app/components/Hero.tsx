@@ -1,4 +1,4 @@
-import { MapPin, Clock, Phone } from 'lucide-react';
+import { MapPin, Clock, MessageCircle } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 export function Hero() {
@@ -48,9 +48,9 @@ export function Hero() {
                 
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                   <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-blue-200" />
+                    <MessageCircle className="w-5 h-5 text-blue-200" />
                     <div>
-                      <div className="text-sm text-blue-200">WhatsApp</div>
+                      <div className="text-sm text-blue-200">Chat en línea</div>
                       <div className="text-white">Atención inmediata</div>
                     </div>
                   </div>

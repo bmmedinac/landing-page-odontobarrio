@@ -5,7 +5,7 @@ export function HowToBook() {
     {
       icon: PhoneCall,
       title: 'Contáctanos',
-      description: 'Escríbenos por WhatsApp o llámanos para consultar disponibilidad'
+      description: 'Escríbenos por el chat de la web o llámanos para consultar disponibilidad'
     },
     {
       icon: Calendar,

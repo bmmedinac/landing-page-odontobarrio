@@ -35,8 +35,8 @@ export function Contact() {
                     <MessageSquare className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h4 className="text-gray-900 mb-1">WhatsApp</h4>
-                    <p className="text-gray-600">+56 9 1234 5678</p>
+                    <h4 className="text-gray-900 mb-1">Chat en línea</h4>
+                    <p className="text-gray-600">Disponible en esta página</p>
                     <p className="text-gray-500 text-sm mt-1">Respuesta rápida Lun-Sáb 8:00-20:00</p>
                   </div>
                 </div>
@@ -80,10 +80,13 @@ export function Contact() {
             <div className="bg-blue-600 rounded-xl p-8 text-white">
               <h3 className="text-white mb-4">¿Listo para Agendar?</h3>
               <p className="text-blue-50 mb-6">
-                Contáctanos por WhatsApp y agenda tu hora de forma rápida y sencilla. Te responderemos a la brevedad.
+                Chatea con nosotros y agenda tu hora de forma rápida y sencilla. Te responderemos a la brevedad.
               </p>
-              <button className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition w-full sm:w-auto">
-                Escribir por WhatsApp
+              <button
+                onClick={() => window.dispatchEvent(new Event('open-chat-widget'))}
+                className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition w-full sm:w-auto"
+              >
+                Abrir chat
               </button>
             </div>
           </div>

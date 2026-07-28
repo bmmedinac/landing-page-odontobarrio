@@ -40,21 +40,20 @@ jobs:
         env:
           VITE_GROUP_WEBHOOKS: ${{ secrets.GROUP_WEBHOOKS }}
 
-      # corpus-explorer se descarga como tarball por HTTPS plano (ni
-      # actions/checkout ni git clone): el GITHUB_TOKEN de este workflow no
-      # tiene permiso para consultar otros repos vía la API (lo que rompe
-      # actions/checkout al resolver la rama por defecto), y por separado el
-      # protocolo git en el runner intenta autenticar incluso repos públicos
-      # y falla con "could not read Username for 'https://github.com'" pese a
-      # limpiar el credential helper. Un curl + tar evita ambos problemas: es
-      # una descarga HTTP anónima normal, sin protocolo git de por medio.
-      - name: Download corpus-explorer
+      # corpus-explorer es un repo privado, así que el GITHUB_TOKEN de este
+      # workflow (limitado a este repo) no puede leerlo: hay que pasarle un
+      # token propio con permiso de lectura sobre corpus-explorer, guardado
+      # como el secreto CORPUS_EXPLORER_TOKEN. Si el secreto falta o caduca,
+      # este paso falla y solo se omite la publicación de /corpus/ — el
+      # deploy de la landing sigue adelante.
+      - name: Checkout corpus-explorer
         id: checkout_corpus
         continue-on-error: true
-        run: |
-          curl -fsSL https://codeload.github.com/bmmedinac/corpus-explorer/tar.gz/refs/heads/main -o corpus-explorer.tar.gz
-          mkdir -p corpus-explorer
-          tar -xzf corpus-explorer.tar.gz -C corpus-explorer --strip-components=1
+        uses: actions/checkout@v4
+        with:
+          repository: bmmedinac/corpus-explorer
+          token: ${{ secrets.CORPUS_EXPLORER_TOKEN }}
+          path: corpus-explorer
 
       - name: Install corpus-explorer dependencies
         id: install_corpus

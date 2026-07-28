@@ -40,18 +40,21 @@ jobs:
         env:
           VITE_GROUP_WEBHOOKS: ${{ secrets.GROUP_WEBHOOKS }}
 
-      # corpus-explorer se clona con git plano (no actions/checkout): el
-      # GITHUB_TOKEN de este workflow no tiene permiso para consultar otros
-      # repos vía la API, y actions/checkout lo necesita para resolver la
-      # rama por defecto. git clone anónimo no pasa por esa API.
-      # -c credential.helper= evita que el credential helper de gh CLI
-      # (preconfigurado globalmente en los runners de GitHub Actions) intente
-      # autenticar esta petición anónima y la haga fallar con
-      # "could not read Username for 'https://github.com'".
-      - name: Checkout corpus-explorer
+      # corpus-explorer se descarga como tarball por HTTPS plano (ni
+      # actions/checkout ni git clone): el GITHUB_TOKEN de este workflow no
+      # tiene permiso para consultar otros repos vía la API (lo que rompe
+      # actions/checkout al resolver la rama por defecto), y por separado el
+      # protocolo git en el runner intenta autenticar incluso repos públicos
+      # y falla con "could not read Username for 'https://github.com'" pese a
+      # limpiar el credential helper. Un curl + tar evita ambos problemas: es
+      # una descarga HTTP anónima normal, sin protocolo git de por medio.
+      - name: Download corpus-explorer
         id: checkout_corpus
         continue-on-error: true
-        run: git -c credential.helper= clone --depth 1 https://github.com/bmmedinac/corpus-explorer corpus-explorer
+        run: |
+          curl -fsSL https://github.com/bmmedinac/corpus-explorer/archive/refs/heads/main.tar.gz -o corpus-explorer.tar.gz
+          mkdir -p corpus-explorer
+          tar -xzf corpus-explorer.tar.gz -C corpus-explorer --strip-components=1
 
       - name: Install corpus-explorer dependencies
         id: install_corpus

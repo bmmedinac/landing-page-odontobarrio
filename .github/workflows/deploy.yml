@@ -52,7 +52,7 @@ jobs:
         id: checkout_corpus
         continue-on-error: true
         run: |
-          curl -fsSL https://github.com/bmmedinac/corpus-explorer/archive/refs/heads/main.tar.gz -o corpus-explorer.tar.gz
+          curl -fsSL https://codeload.github.com/bmmedinac/corpus-explorer/tar.gz/refs/heads/main -o corpus-explorer.tar.gz
           mkdir -p corpus-explorer
           tar -xzf corpus-explorer.tar.gz -C corpus-explorer --strip-components=1
 

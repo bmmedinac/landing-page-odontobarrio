@@ -25,6 +25,15 @@ const markdownComponents = {
 const DEFAULT_WEBHOOK_URL = 'https://hook.us1.make.com/36anav6tlgq85s1fxmvwdrn6abn6jlh2';
 const ACCESS_CODE_STORAGE_KEY = 'odontobarrio-chat-access-code';
 
+// Worker que guarda el código de acceso como secreto y valida server-side
+// (ver cloudflare-worker/README.md). Se pega la URL real tras hacer deploy.
+const ACCESS_CODE_WORKER_URL = 'https://odontobarrio-chat-access-gate.<tu-subdominio>.workers.dev';
+
+// Filtro anti-bot de bajo esfuerzo: un formulario que se completa antes de
+// este tiempo, o con el campo trampa relleno, no es un humano leyendo el
+// mensaje del candado.
+const MIN_HUMAN_DELAY_MS = 1200;
+
 function loadGroupWebhooks(): Record<string, string> {
   const raw = import.meta.env.VITE_GROUP_WEBHOOKS as string | undefined;
   if (!raw) return { General: DEFAULT_WEBHOOK_URL };
@@ -171,6 +180,9 @@ export function ChatWidget() {
   );
   const [codeInput, setCodeInput] = useState('');
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const codeGateShownAt = useRef<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -206,13 +218,45 @@ export function ChatWidget() {
     return () => window.removeEventListener('open-chat-widget', openChat);
   }, []);
 
-  const submitCode = () => {
+  useEffect(() => {
+    if (isOpen && !accessCode && codeGateShownAt.current === null) {
+      codeGateShownAt.current = Date.now();
+    }
+  }, [isOpen, accessCode]);
+
+  const submitCode = async () => {
     const code = codeInput.trim();
-    if (!code) return;
-    window.localStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
-    setAccessCode(code);
-    setCodeInput('');
+    if (!code || isCheckingCode) return;
+
+    // Honeypot: un campo invisible para personas que un bot que autocompleta
+    // formularios sí llena. Y nadie lee el aviso del candado en menos de
+    // MIN_HUMAN_DELAY_MS. En ambos casos, no delatamos que fue detectado
+    // como bot: mostramos el mismo error genérico que un código incorrecto.
+    const elapsed = Date.now() - (codeGateShownAt.current ?? Date.now());
+    if (honeypot.trim() !== '' || elapsed < MIN_HUMAN_DELAY_MS) {
+      setCodeError('Código incorrecto. Intenta de nuevo.');
+      return;
+    }
+
+    setIsCheckingCode(true);
     setCodeError(null);
+    try {
+      const response = await fetch(ACCESS_CODE_WORKER_URL, {
+        method: 'POST',
+        headers: { 'X-Access-Code': code },
+      });
+      if (!response.ok) {
+        setCodeError('Código incorrecto. Intenta de nuevo.');
+        return;
+      }
+      window.localStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
+      setAccessCode(code);
+      setCodeInput('');
+    } catch {
+      setCodeError('No pudimos verificar el código. Intenta nuevamente en unos minutos.');
+    } finally {
+      setIsCheckingCode(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -313,20 +357,32 @@ export function ChatWidget() {
               </div>
               <p className="text-gray-700">Este chat es solo para alumnos. Ingresa el código de acceso que te compartieron.</p>
               <div className="w-full flex items-center gap-2">
+                {/* Trampa para bots que autocompletan formularios: invisible y fuera del tab order para personas. */}
+                <input
+                  type="text"
+                  name="company"
+                  value={honeypot}
+                  onChange={(event) => setHoneypot(event.target.value)}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  autoComplete="off"
+                  className="absolute left-[-9999px] h-0 w-0 opacity-0"
+                />
                 <input
                   type="password"
                   value={codeInput}
                   onChange={(event) => setCodeInput(event.target.value)}
                   onKeyDown={handleCodeKeyDown}
                   placeholder="Código de acceso"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isCheckingCode}
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
                 <button
                   onClick={submitCode}
-                  disabled={!codeInput.trim()}
+                  disabled={!codeInput.trim() || isCheckingCode}
                   className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  Entrar
+                  {isCheckingCode ? 'Verificando…' : 'Entrar'}
                 </button>
               </div>
               {codeError && <p className="text-sm text-red-600">{codeError}</p>}

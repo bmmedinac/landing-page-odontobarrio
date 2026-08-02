@@ -41,6 +41,9 @@ export function Navigation() {
             <a href="corpus/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-blue-600 transition">
               Conversaciones
             </a>
+            <a href="diffs/" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-blue-600 transition">
+              Evolución de Prompts
+            </a>
             <button
               onClick={() => scrollToSection('contacto')}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
@@ -87,6 +90,9 @@ export function Navigation() {
             </button>
             <a href="corpus/" target="_blank" rel="noopener noreferrer" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
               Conversaciones
+            </a>
+            <a href="diffs/" target="_blank" rel="noopener noreferrer" className="block w-full text-left text-gray-700 hover:text-blue-600 transition">
+              Evolución de Prompts
             </a>
             <button
               onClick={() => scrollToSection('contacto')}

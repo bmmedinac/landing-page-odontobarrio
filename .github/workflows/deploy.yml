@@ -75,6 +75,45 @@ jobs:
           mkdir -p dist/corpus
           cp -r corpus-explorer/dist/. dist/corpus/
 
+      # prompt-diff-viewer es un repo privado, mismo motivo y mismo patrón que
+      # corpus-explorer arriba: token propio (PROMPT_DIFF_VIEWER_TOKEN) porque
+      # el GITHUB_TOKEN de este workflow no puede leer otro repo privado. Si el
+      # secreto falta o el build falla, solo se omite /diffs/ — el resto del
+      # deploy sigue.
+      - name: Checkout prompt-diff-viewer
+        id: checkout_diffs
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: bmmedinac/prompt-diff-viewer
+          token: ${{ secrets.PROMPT_DIFF_VIEWER_TOKEN }}
+          path: prompt-diff-viewer
+
+      - name: Install prompt-diff-viewer dependencies
+        id: install_diffs
+        if: steps.checkout_diffs.outcome == 'success'
+        continue-on-error: true
+        run: pnpm install --frozen-lockfile
+        working-directory: prompt-diff-viewer
+
+      # OJO: a diferencia de npm ("npm run build -- --base=..."), pnpm
+      # duplica el separador "--" al reenviar args a un script encadenado
+      # (tsc -b && vite build), y Vite termina ignorando el --base. Por eso
+      # acá se invoca "vite build" directo con pnpm exec en vez de pasar por
+      # el script "build" de package.json.
+      - name: Build prompt-diff-viewer
+        id: build_diffs
+        if: steps.install_diffs.outcome == 'success'
+        continue-on-error: true
+        run: pnpm exec tsc -b && pnpm exec vite build --base=/landing-page-odontobarrio/diffs/
+        working-directory: prompt-diff-viewer
+
+      - name: Merge prompt-diff-viewer into dist
+        if: steps.build_diffs.outcome == 'success'
+        run: |
+          mkdir -p dist/diffs
+          cp -r prompt-diff-viewer/dist/. dist/diffs/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # corpus-explorer vive en otro repo y este workflow siempre clona su main
+  # más reciente al buildear, pero solo corría con push a ESTE repo — un
+  # merge en corpus-explorer no republicaba nada. Su propio workflow
+  # (.github/workflows/notify-landing-deploy.yml) dispara este evento al
+  # mergear a su main.
+  repository_dispatch:
+    types: [corpus-explorer-updated]
 
 permissions:
   contents: read
